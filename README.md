@@ -1,1 +1,1 @@
-# go-rest-api
+# go-games-rest-api
