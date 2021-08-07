@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	games "github.com/LYSingD/go-games-rest-api/games"
@@ -13,13 +13,18 @@ import (
 )
 
 type Games []games.Game
-
 type GameHandlers struct {
 	Store map[string]games.Game // store = Game{}
 	sync.Mutex
 }
 
-func (gh *GameHandlers) DistributeMethods(w http.ResponseWriter, r *http.Request) {
+func NewGameHandlers() *GameHandlers {
+	return &GameHandlers{
+		Store: games.GameList,
+	}
+}
+
+func (gh *GameHandlers) DistributeGamesMethods(w http.ResponseWriter, r *http.Request) {
 	var methodsDistribution = map[string]interface{}{
 		"GET":  gh.getGames,
 		"POST": gh.postGame,
@@ -28,11 +33,10 @@ func (gh *GameHandlers) DistributeMethods(w http.ResponseWriter, r *http.Request
 	methodFunc, hasMethod := methodsDistribution[requestMethod]
 	if !hasMethod {
 		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method not allowed"))
+		w.Write([]byte("Method not allowed\n"))
 		return
 	}
 	methodFunc.(func(http.ResponseWriter, *http.Request))(w, r)
-
 }
 
 func (gh *GameHandlers) postGame(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +45,6 @@ func (gh *GameHandlers) postGame(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
-		log.Fatal(err)
 		return
 	}
 
@@ -49,7 +52,7 @@ func (gh *GameHandlers) postGame(w http.ResponseWriter, r *http.Request) {
 	unmarshalErr := json.Unmarshal(bodyBytes, &newGame)
 	if unmarshalErr != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		w.Write([]byte(unmarshalErr.Error()))
 		return
 	}
 
@@ -80,29 +83,69 @@ func (gh *GameHandlers) getGames(w http.ResponseWriter, r *http.Request) {
 	for _, game := range gh.Store {
 		games = append(games, game)
 	}
-	gh.Unlock()
+	defer gh.Unlock()
 
 	jsonBytes, err := json.Marshal(games) // write into json
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
-		log.Fatal(err)
 	}
 	w.Header().Add("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 }
 
-func NewGameHandlers() *GameHandlers {
-	return &GameHandlers{
-		Store: map[string]games.Game{
-			// "id1": {
-			// 	ID:        "id1",
-			// 	Name:      "Monster Hunter: World",
-			// 	Developer: "Capcom",
-			// 	Rating:    "T",
-			// 	Genres:    []string{"Role-Playing", "Action RPG"},
-			// },
-		},
+func (gh *GameHandlers) DistributeGamesMethodsWithId(w http.ResponseWriter, r *http.Request) {
+	urlPath := strings.TrimSpace(r.URL.Path)
+	urlPath = strings.TrimPrefix(urlPath, "/")
+	urlPath = strings.TrimSuffix(urlPath, "/")
+
+	parameters := strings.Split(urlPath, "/")
+	requiredNumOfParameters := 2
+	hasNotEnoughParameters := requiredNumOfParameters > len(parameters)
+	if hasNotEnoughParameters {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Insufficient Parameters\n"))
+		return
 	}
+
+	var methodsDistributionWithId = map[string]interface{}{
+		"GET": gh.getGameById,
+		"PUT": gh.updateGameById,
+	}
+	var requestMethod string = r.Method
+	methodFunc, hasMethod := methodsDistributionWithId[requestMethod]
+	if !hasMethod {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte("Method not allowed\n"))
+		return
+	}
+	methodFunc.(func(http.ResponseWriter, *http.Request, string))(w, r, parameters[len(parameters)-1])
+
 }
+
+func (gh *GameHandlers) getGameById(w http.ResponseWriter, r *http.Request, id string) {
+	gh.Lock()
+	game, hasGame := gh.Store[id]
+	defer gh.Unlock()
+
+	if !hasGame {
+		w.WriteHeader(http.StatusNotFound)
+		responseMessage := fmt.Sprintf("Could not found game with id: %s\n", id)
+		w.Write([]byte(responseMessage))
+		return
+	}
+
+	jsonBytes, err := json.Marshal(game)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+	}
+	w.Header().Add("content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
+}
+
+// func (gh *GameHandlers) updateGameById(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Println("Updating....")
+// }
