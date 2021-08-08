@@ -6,7 +6,6 @@ Inspired by kubucation YouTube channel ([link](https://www.youtube.com/watch?v=2
 
 ## Tech Stack
 * Golang
-* Curl command
 
   
 ## Data type
