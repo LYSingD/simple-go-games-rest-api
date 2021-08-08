@@ -62,7 +62,7 @@ Go to the project directory
 
 Configure the desired port in `/server.go`, line 14.
 ```go
-	log.Fatal(http.ListenAndServe(":[port]", nil))
+log.Fatal(http.ListenAndServe(":[port]", nil))
 ```
 
 Run the server
