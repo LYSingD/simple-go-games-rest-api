@@ -77,7 +77,7 @@ Use `curl` command, like
 ```
 
   
-## Features
+## API endpoints
 
 /games
 * `GET` - Get a list of all games, returned as JSON
