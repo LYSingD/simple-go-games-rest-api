@@ -17,12 +17,14 @@ var GameList = map[string]Game{
 		Genres:    []string{"General", "Action Adventure", "Open-World"},
 	},
 	"ee9015a7-6219-4620-af98-cf78601c6446": {
+		ID:        "ee9015a7-6219-4620-af98-cf78601c6446",
 		Name:      "Monster Hunter World: Iceborne",
 		Developer: "Capcom",
 		Rating:    "T",
 		Genres:    []string{"Action"},
 	},
 	"c2b337b0-839f-40b8-b43d-921bfd2812a8": {
+		ID:        "c2b337b0-839f-40b8-b43d-921bfd2812a8",
 		Name:      "Watch Dog",
 		Developer: "Ubisoft",
 		Rating:    "M",

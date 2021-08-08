@@ -12,5 +12,4 @@ func main() {
 	http.HandleFunc("/games", gh.DistributeGamesMethods)
 	http.HandleFunc("/games/", gh.DistributeGamesMethodsWithId)
 	log.Fatal(http.ListenAndServe(":8080", nil))
-
 }
