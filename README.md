@@ -79,10 +79,14 @@ Use `curl` command, like
   
 ## Features
 
-- `GET /games` returns a list with all games
-- `POST /games/` adds a new game
-- `GET /games/:id` return a JSON object of a specific game 
-- `PUT /games/:id` updates a specific game
-- `DELETE /games/:id` removes a specific game
+/games
+* `GET` - Get a list of all games, returned as JSON
+* `POST` - Add a new game from request data sent as JSON
+
+
+/games/:id
+* `GET` - Get a specific game by its ID, return the data as JSON
+* `PUT` - Update a specific game by its ID from request data sent as JSON
+* `DELETE` - Delete a specific game by its ID
 
   
